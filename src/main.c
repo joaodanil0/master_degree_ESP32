@@ -9,19 +9,41 @@
 #include "esp_bt_main.h"
 #include "esp_gap_ble_api.h"
 
-static esp_ble_adv_params_t ble_adv_params = {
+
+#define MS_TO_HEX(ms_value) (uint16_t)(ms_value / 0.625)
+
+
+
+// uint16_t ms_to_hex(int ms_value){
+// 	// Range: 0x0020 to 0x4000	(32 to 16384)	( 20 ms to 10.24 sec )
+// 	// Default: 0x0800 			(2048)			(1.28 second)
+
+// 	if (ms_value <= 20) return 0x0020;
+// 	else if (ms_value >= 10240) return 0x4000;
+
+// 	//ms_value = N * 0.625
+// 	// N = ms_value / 0.625
+
+// 	return (uint16_t) (ms_value / 0.625);
+// }
+
+
+esp_ble_adv_params_t ble_adv_params = {
 	
-	.adv_int_min = 0x20,
-	.adv_int_max = 0x40,
+	.adv_int_min = MS_TO_HEX(45),
+	.adv_int_max = MS_TO_HEX(47),
 	.adv_type = ADV_TYPE_NONCONN_IND,
 	.own_addr_type  = BLE_ADDR_TYPE_PUBLIC,
 	.channel_map = ADV_CHNL_ALL,
 	.adv_filter_policy  = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
 };
 
-static uint8_t adv_raw_data[30] = {0x02,0x01,0x06,0x1A,0xFF,0x4C,0x00,0x02,0x15,0xFD,
-								   0xA5,0x06,0x93,0xA4,0xE2,0x4F,0xB1,0xAF,0xCF,0xC6,
-								   0xEB,0x07,0x64,0x78,0x25,0x00,0x00,0x00,0x00,0xC5};
+
+static uint8_t adv_raw_data[30] = {
+	0x02,0x01,0x02, // Device type: LE Only
+
+	//String to HEX site: https://www.rapidtables.com/convert/number/ascii-to-hex.html
+	0x06,0x09,0x54,0x45,0x53,0x54,0x31}; //Complete local name: TEST1
 
 // GAP callback
 static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
@@ -49,6 +71,7 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 			break;
 	}
 }
+
 
 
 void app_main() {
@@ -85,6 +108,6 @@ void app_main() {
 	printf("- GAP callback registered\n\n");
 	
 	// configure the adv data
-	ESP_ERROR_CHECK(esp_ble_gap_config_adv_data_raw(adv_raw_data, 30));
+	ESP_ERROR_CHECK(esp_ble_gap_config_adv_data_raw(adv_raw_data, sizeof(adv_raw_data)));
 	printf("- ADV data configured\n\n");
 }
